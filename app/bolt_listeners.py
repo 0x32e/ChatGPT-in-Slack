@@ -29,6 +29,10 @@ from app.slack_ops import (
 
 from app.utils import redact_string
 
+from app.langchain_ops import (
+    execute_agent,
+)
+
 #
 # Listener functions
 #
@@ -51,6 +55,11 @@ def respond_to_app_mention(
     client: WebClient,
     logger: logging.Logger,
 ):
+    # TODO: 
+    # - Initialize a LangChain agent executor
+    # - Create a custom callback handler (see https://github.com/hwchase17/chat-langchain/blob/master/callback.py#L16)
+    # - Use it inside this handler (see https://github.com/hwchase17/chat-langchain/blob/master/main.py#L39)
+
     if payload.get("thread_ts") is not None:
         parent_message = find_parent_message(
             client, context.channel_id, payload.get("thread_ts")
@@ -131,6 +140,7 @@ def respond_to_app_mention(
             max_context_tokens,
         ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
         num_messages = len([msg for msg in messages if msg.get("role") != "system"])
+        
         if num_messages == 0:
             update_wip_message(
                 client=client,
@@ -141,22 +151,32 @@ def respond_to_app_mention(
                 user=context.user_id,
             )
         else:
-            stream = start_receiving_openai_response(
-                openai_api_key=openai_api_key,
-                model=context["OPENAI_MODEL"],
-                messages=messages,
-                user=context.user_id,
+            # TODO:
+            # - Run the LangChain agent
+
+            res = execute_agent(
+                messages, 
+                user=context.user_id
             )
-            consume_openai_stream_to_write_reply(
-                client=client,
-                wip_reply=wip_reply,
-                context=context,
-                user_id=user_id,
-                messages=messages,
-                stream=stream,
-                timeout_seconds=OPENAI_TIMEOUT_SECONDS,
-                translate_markdown=TRANSLATE_MARKDOWN,
-            )
+
+            print(f"res: {res}")
+
+            # stream = start_receiving_openai_response(
+            #     openai_api_key=openai_api_key,
+            #     model=context["OPENAI_MODEL"],
+            #     messages=messages,
+            #     user=context.user_id,
+            # )
+            # consume_openai_stream_to_write_reply(
+            #     client=client,
+            #     wip_reply=wip_reply,
+            #     context=context,
+            #     user_id=user_id,
+            #     messages=messages,
+            #     stream=stream,
+            #     timeout_seconds=OPENAI_TIMEOUT_SECONDS,
+            #     translate_markdown=TRANSLATE_MARKDOWN,
+            # )
 
     except Timeout:
         if wip_reply is not None:
