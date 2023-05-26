@@ -156,10 +156,14 @@ def respond_to_app_mention(
 
             res = execute_agent(
                 messages, 
-                user=context.user_id
+                user_id=context.user_id
             )
 
-            print(f"res: {res}")
+            client.chat_update(
+                channel=context.channel_id,
+                ts=wip_reply["message"]["ts"],
+                text=res,
+            )
 
             # stream = start_receiving_openai_response(
             #     openai_api_key=openai_api_key,
@@ -373,39 +377,50 @@ def respond_to_new_message(
                 user=context.user_id,
             )
         else:
-            stream = start_receiving_openai_response(
-                openai_api_key=openai_api_key,
-                model=context["OPENAI_MODEL"],
-                messages=messages,
-                user=user_id,
+            # stream = start_receiving_openai_response(
+            #     openai_api_key=openai_api_key,
+            #     model=context["OPENAI_MODEL"],
+            #     messages=messages,
+            #     user=user_id,
+            # )
+
+            # latest_replies = client.conversations_replies(
+            #     channel=context.channel_id,
+            #     ts=wip_reply.get("ts"),
+            #     include_all_metadata=True,
+            #     limit=1000,
+            # )
+            # if (
+            #     latest_replies.get("messages", [])[-1]["ts"]
+            #     != wip_reply["message"]["ts"]
+            # ):
+            #     # Since a new reply will come soon, this app abandons this reply
+            #     client.chat_delete(
+            #         channel=context.channel_id,
+            #         ts=wip_reply["message"]["ts"],
+            #     )
+            #     return
+
+            # consume_openai_stream_to_write_reply(
+            #     client=client,
+            #     wip_reply=wip_reply,
+            #     context=context,
+            #     user_id=user_id,
+            #     messages=messages,
+            #     stream=stream,
+            #     timeout_seconds=OPENAI_TIMEOUT_SECONDS,
+            #     translate_markdown=TRANSLATE_MARKDOWN,
+            # )
+
+            res = execute_agent(
+                messages, 
+                user_id=context.user_id
             )
 
-            latest_replies = client.conversations_replies(
+            client.chat_update(
                 channel=context.channel_id,
-                ts=wip_reply.get("ts"),
-                include_all_metadata=True,
-                limit=1000,
-            )
-            if (
-                latest_replies.get("messages", [])[-1]["ts"]
-                != wip_reply["message"]["ts"]
-            ):
-                # Since a new reply will come soon, this app abandons this reply
-                client.chat_delete(
-                    channel=context.channel_id,
-                    ts=wip_reply["message"]["ts"],
-                )
-                return
-
-            consume_openai_stream_to_write_reply(
-                client=client,
-                wip_reply=wip_reply,
-                context=context,
-                user_id=user_id,
-                messages=messages,
-                stream=stream,
-                timeout_seconds=OPENAI_TIMEOUT_SECONDS,
-                translate_markdown=TRANSLATE_MARKDOWN,
+                ts=wip_reply["message"]["ts"],
+                text=res,
             )
 
     except Timeout:

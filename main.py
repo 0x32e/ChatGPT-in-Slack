@@ -23,6 +23,7 @@ if __name__ == "__main__":
     from slack_bolt.adapter.socket_mode import SocketModeHandler
 
     logging.basicConfig(level=SLACK_APP_LOG_LEVEL)
+    logging.disable('DEBUG')
 
     app = App(
         token=os.environ["SLACK_BOT_TOKEN"],
