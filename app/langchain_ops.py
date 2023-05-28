@@ -19,7 +19,6 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.chains import RetrievalQA
-from langchain.utilities import SerpAPIWrapper
 from langchain.agents import Tool
 from langchain.memory import ConversationBufferMemory
 
@@ -27,14 +26,15 @@ from langchain.tools import StructuredTool
 from llama_index import GPTVectorStoreIndex, download_loader, GPTVectorStoreIndex
 
 from langchain.utilities import PythonREPL
+from langchain.utilities import BingSearchAPIWrapper
 
 import os
 
-if os.environ.get("GPLACES_API_KEY") == "":
-    raise Exception("Environment variable GPLACES_API_KEY is missing")
+if os.environ.get("BING_SEARCH_URL") == "":
+    raise Exception("Environment variable BING_SEARCH_URL is missing") 
 
-if os.environ.get("SERPAPI_API_KEY") == "":
-    raise Exception("Environment variable SERPAPI_API_KEY is missing")
+if os.environ.get("BING_SUBSCRIPTION_KEY") == "":
+    raise Exception("Environment variable BING_SUBSCRIPTION_KEY is missing") 
 
 _llm = ChatOpenAI(temperature=0.0)
 _python_repl = PythonREPL()
@@ -54,19 +54,27 @@ _python_repl = PythonREPL()
 _tools = load_tools(
     [
         "llm-math",
-        "serpapi",
     ],
     llm=_llm
 )
 
 # You can create the tool to pass to an agent
-repl_tool = Tool(
-    name="python_repl",
-    description="A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`. You can also use this if the other Calculator cannot execute the operation.",
-    func=_python_repl.run
+# repl_tool = Tool(
+#     name="python_repl",
+#     description="A Python shell. Use this to execute python commands. Input should be a valid python command. If you want to see the output of a value, you should print it out with `print(...)`. You can also use this if the other Calculator cannot execute the operation.",
+#     func=_python_repl.run
+# )
+
+# _tools.append(repl_tool)
+
+_bingSearch = BingSearchAPIWrapper()
+_bingTool = Tool(
+     name="bing_search",
+     description="A Bing search engine. Use this to search for information on the web. Input should be a valid search query.",
+     func=_bingSearch.run
 )
 
-_tools.append(repl_tool)
+_tools.append(_bingTool)
 
 _memory = ConversationBufferMemory(memory_key="chat_history")
 
@@ -77,6 +85,7 @@ _agent_chain = initialize_agent(
     handle_parsing_errors=True,
     verbose=True,
     memory=_memory,
+    max_iterations=10,
 )
 
 default_template = """[SYSTEM]:
