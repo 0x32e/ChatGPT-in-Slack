@@ -151,10 +151,12 @@ def respond_to_app_mention(
                 user=context.user_id,
             )
         else:
-            # TODO:
-            # - Run the LangChain agent
-
+            parent_message = find_parent_message(
+                client, context.channel_id, payload.get("thread_ts")
+            )
+            ts = parent_message["ts"] if parent_message is not None else wip_reply["ts"]
             res = execute_agent(
+                ts,
                 messages, 
                 user_id=context.user_id
             )
@@ -377,42 +379,12 @@ def respond_to_new_message(
                 user=context.user_id,
             )
         else:
-            # stream = start_receiving_openai_response(
-            #     openai_api_key=openai_api_key,
-            #     model=context["OPENAI_MODEL"],
-            #     messages=messages,
-            #     user=user_id,
-            # )
-
-            # latest_replies = client.conversations_replies(
-            #     channel=context.channel_id,
-            #     ts=wip_reply.get("ts"),
-            #     include_all_metadata=True,
-            #     limit=1000,
-            # )
-            # if (
-            #     latest_replies.get("messages", [])[-1]["ts"]
-            #     != wip_reply["message"]["ts"]
-            # ):
-            #     # Since a new reply will come soon, this app abandons this reply
-            #     client.chat_delete(
-            #         channel=context.channel_id,
-            #         ts=wip_reply["message"]["ts"],
-            #     )
-            #     return
-
-            # consume_openai_stream_to_write_reply(
-            #     client=client,
-            #     wip_reply=wip_reply,
-            #     context=context,
-            #     user_id=user_id,
-            #     messages=messages,
-            #     stream=stream,
-            #     timeout_seconds=OPENAI_TIMEOUT_SECONDS,
-            #     translate_markdown=TRANSLATE_MARKDOWN,
-            # )
-
+            parent_message = find_parent_message(
+                client, context.channel_id, payload.get("thread_ts")
+            )
+            ts = parent_message["ts"] if parent_message is not None else wip_reply["ts"]
             res = execute_agent(
+                ts,
                 messages, 
                 user_id=context.user_id
             )
