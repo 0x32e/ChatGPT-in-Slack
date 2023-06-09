@@ -20,7 +20,7 @@ def execute_agent(
         last_user_input = _get_last_user_input(messages)
 
         message_history = PostgresChatMessageHistory(
-             connection_string=os.environ["POSTGRES_URI"], 
+             connection_string=f'{os.environ["POSTGRES_URI"]}/langchain', 
              session_id=thread_id,
              table_name="messages"
         )

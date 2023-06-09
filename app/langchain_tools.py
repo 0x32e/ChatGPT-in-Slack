@@ -7,6 +7,7 @@ from langchain.base_language import BaseLanguageModel
 from langchain.agents.agent_toolkits import SQLDatabaseToolkit
 from langchain.sql_database import SQLDatabase
 from langchain.tools import BaseTool
+# from langchain.document_loaders import NotionDBLoader
 
 def _getGoogleSerperTool() -> Tool:
     return Tool(
@@ -15,8 +16,18 @@ def _getGoogleSerperTool() -> Tool:
         description="A search engine. Useful for when you need to answer questions about current events. Input should be a search query."
     )
 
+# def _notionTool() -> Tool:
+#     loader = NotionDBLoader(
+#         integration_token="", 
+#         database_id="",
+#         request_timeout_sec=30 # optional, defaults to 10
+#     )
+#     docs = loader.load()
+#     return Tool(
+#     )
+
 def _dbTool(llm: BaseLanguageModel) -> List[BaseTool]:
-    db = SQLDatabase.from_uri(os.environ["POSTGRES_URI"])
+    db = SQLDatabase.from_uri(f'{os.environ["POSTGRES_URI"]}/crunchbase')
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)
     return toolkit.get_tools()
 
